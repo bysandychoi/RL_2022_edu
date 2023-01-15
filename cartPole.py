@@ -26,9 +26,11 @@ def _q_learning(train_env_make, test_env_make, param_dict, video_folder):
     q_learning.test(test_env, q_table, video_folder, visualize = True)
 
 def _dqn(train_env_make, test_env_make, video_folder, param_dict):
-    online_net = dqn.train(train_env_make, param_dict)
+    online_net, losses, episode_steps, episode_rewards = dqn.train(train_env_make, param_dict)
     test_env = Monitor(test_env_make, f'./{video_folder}', force=True)
     dqn.test(test_env, online_net, video_folder)
+    plot_losses(losses, 'Q-value L1 Loss', 'updates', 'loss', f'./{video_folder}/Q-value_L1_Loss.png')
+    plot_episode_rewards(episode_steps, episode_rewards, 'Episodic Rewards', 'steps', 'epi. reward', f'./{video_folder}/Episodic_Rewards.png')
 
 class DiscreteCartpole(CartPoleEnv):
     def __init__(self, *args, **kwargs):
@@ -106,7 +108,6 @@ if __name__ == "__main__":
                     'target_score' : 195}
 
     _dqn(train_env_make, test_env_make, 'CartPole-v0/DQN', param_dict_DQN)
-
 
 
 

@@ -53,10 +53,10 @@ def train(env_make, param_dict):
     optimizer = torch.optim.Adam(online_net.parameters(),
                                 lr = param_dict['learning_rate'])
 
-    ndqn_losses = []
+    losses = []
     episode_reward = 0.0
-    ndqn_episode_rewards = []
-    ndqn_episode_steps = []
+    episode_rewards = []
+    episode_steps = []
 
     print('Experience Replay Warmup...')
     state, done = env_make.reset(), False
@@ -78,12 +78,11 @@ def train(env_make, param_dict):
     state, done = env_make.reset(), False
 
     for step in progress_bar:
-        online_net.eval()
-
         if np.random.random() < param_dict['epsilon']:
             action = env_make.action_space.sample()
         else:
-            action = online_net(torch.FloatTensor(state)).argmax().item()
+            tensor_state = torch.FloatTensor(state)
+            action = online_net(tensor_state).argmax().item()
 
         next_state, reward, done, _ = env_make.step(action)
 
@@ -92,8 +91,8 @@ def train(env_make, param_dict):
 
         if done:
             state = env_make.reset()
-            ndqn_episode_rewards.append(episode_reward)
-            ndqn_episode_steps.append(step)
+            episode_rewards.append(episode_reward)
+            episode_steps.append(step)
             episode_reward = 0.0
         else:
             state = next_state
@@ -119,20 +118,20 @@ def train(env_make, param_dict):
             loss.backward()
             optimizer.step()
 
-            ndqn_losses.append(loss.item())
+            losses.append(loss.item())
 
         if step % param_dict['target_update_freq'] == param_dict['target_update_freq'] - 1:
             target_net.load_state_dict(online_net.state_dict())
 
         if step % 100 == 99:
-            avg_rew = np.mean(ndqn_episode_rewards[-100:])
-            progress_bar.set_description(f'loss: {np.mean(ndqn_losses[-100:]):6.4f}, '
+            avg_rew = np.mean(episode_rewards[-100:])
+            progress_bar.set_description(f'loss: {np.mean(losses[-100:]):6.4f}, '
                                          f'epi. rew. : {avg_rew:5.1f}, '
-                                         f'max_rew.: {np.max(ndqn_episode_rewards):5.1f}')
+                                         f'max_rew.: {np.max(episode_rewards):5.1f}')
             if avg_rew > param_dict['target_score']:
                 break
 
-    return online_net
+    return online_net, losses, episode_steps, episode_rewards
 
 def test(test_env, online_net, video_folder):
 
