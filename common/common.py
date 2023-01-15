@@ -1,9 +1,10 @@
 import glob, io
 import base64
+import numpy as np
 
 from IPython import display as ipythondisplay
-from pyvirtualdisplay import Display
-from IPython.display import HTML
+from matplotlib import pyplot as plt
+from IPython.display import HTML, clear_output
 
 def show_video(video_folder):
     mp4list =glob.glob(f'{video_folder}/*.mp4')
@@ -18,7 +19,7 @@ def show_video(video_folder):
     else:
         print("Could not find video")
 
-def random_episode(env):
+def random_episode(env, video_folder):
     state = env.reset()
     done = False
     step_count = 0
@@ -32,4 +33,22 @@ def random_episode(env):
         if step_count > 10:
             break
     env.close()
-    show_video('video_random_episode')
+    show_video(video_folder)
+
+def moving_average(x, w):
+    return np.convolve(x, np.ones(w), 'valid') / w
+
+def plot_losses(losses, title, xlabel, ylabel, save_path):
+    plt.plot(moving_average(losses, 100))
+    plot_common(title, xlabel, ylabel, save_path)
+
+def plot_episode_rewards(episode_steps, episode_rewards, title, xlabel, ylabel, save_path):
+    plt.plot(moving_average(episode_steps, 100), moving_average(episode_rewards, 100))
+    plot_common(title, xlabel, ylabel, save_path)
+
+def plot_common(title, xlabel, ylabel, save_path):
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.show()
+    plt.savefig(save_path)
