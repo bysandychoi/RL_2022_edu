@@ -21,6 +21,9 @@ class QNetwork(nn.Module):
         x = F.relu(self.fc2(x))
         return self.head(x)
 
+##### Expericence Replay #####
+# State, Action, Reward, Next state, Done을 저장하고, 
+# random sampling 할 수 있는 Experience Replay 를 구현  
 class ReplayMemory:
     def __init__(self, buffer_size:int = 50000, n_steps =1, discount_rate=0.99):
         self.buffer = deque(maxlen = buffer_size)
